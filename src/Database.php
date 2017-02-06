@@ -1,6 +1,10 @@
 <?php
+	namespace SimpleDB;
+
     /**
      * Used to access database and send raw queries.
+	 * This is named SimpleDB so it doesn't conflict with other libraries.
+	 *
      * @author Christopher T. Bishop
      * @version 0.1.0
      */
