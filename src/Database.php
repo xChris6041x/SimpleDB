@@ -1,29 +1,29 @@
 <?php
 	namespace SimpleDB;
 
-    /**
-     * Used to access database and send raw queries.
-	 * This is named SimpleDB so it doesn't conflict with other libraries.
-	 *
-     * @author Christopher T. Bishop
-     * @version 0.1.0
-     */
-    final class Database {
+	/**
+	* Used to access database and send raw queries.
+	* This is named SimpleDB so it doesn't conflict with other libraries.
+	*
+	* @author Christopher T. Bishop
+	* @version 0.1.0
+	*/
+	final class Database {
+		
+		private $url; // The URL of the database.
+		private $user; // The user accessing the database.
+		private $password; // The user's password.
+		private $dbName; // The name of the database.
 
-        private $url; // The URL of the database.
-        private $user; // The user accessing the database.
-        private $password; // The user's password.
-        private $dbName; // The name of the database.
+		private $conn = null;
 
-        private $conn = null;
 
-        
-        /**
-         * Builds the database object, ready to connect.
-         * @author Christopher T. Bishop
-         * @since 0.1.0
-         */
-        public function __construct($url, $user, $password, $dbName){
+		/**
+		* Builds the database object, ready to connect.
+		* @author Christopher T. Bishop
+		* @since 0.1.0
+		*/
+		public function __construct($url, $user, $password, $dbName) {
 			$this->url = $url;
 			$this->user = $user;
 			$this->password = $password;
@@ -31,22 +31,22 @@
 		}
 
 
-        private function connect() {
-            if($this->conn == null) {
-                $this->conn = new mysqli($this->url, $this->user, $this->password, $this->dbName);
-                if($this->conn->connect_error) {
-                    trigger_error('Could not connect to MySQL Server: ' . $this->conn->connect_error, E_USER_ERROR);
-                    $this->conn = null;
-                }
-            }
-            return $this->conn;
-        }
+		private function connect() {
+			if($this->conn == null) {
+				$this->conn = new mysqli($this->url, $this->user, $this->password, $this->dbName);
+				if($this->conn->connect_error) {
+					trigger_error('Could not connect to MySQL Server: ' . $this->conn->connect_error, E_USER_ERROR);
+					$this->conn = null;
+				}
+			}
+			return $this->conn;
+		}
 
-        private function rawQuery($sql){
+		private function rawQuery($sql){
 			$conn = $this->connect();
 			$result = $conn->query($sql);
 
-			if($conn->error !== ''){
+			if($conn->error !== '') {
 				trigger_error("Mysql Error: $conn->error", E_USER_NOTICE);
 				trigger_error($sql, E_USER_NOTICE);
 				$result = null;
@@ -55,31 +55,31 @@
 			$conn->close();
 			return $result;
 		}
-        private function rawQueries($sqls) {
-            $conn = $this->connect();
-            $results = [];
+		private function rawQueries($sqls) {
+			$conn = $this->connect();
+			$results = [];
 
-            foreach($sqls as $sql) {
-                $result = $con->query($sql);
-                if($conn->error !== '') {
-                    trigger_error("Mysql Error: $conn->error", E_USER_NOTICE);
+			foreach($sqls as $sql) {
+				$result = $con->query($sql);
+				if($conn->error !== '') {
+					trigger_error("Mysql Error: $conn->error", E_USER_NOTICE);
 					trigger_error($sql, E_USER_NOTICE);
 					$result = null;
-                }
+				}
 
-                $results[] = $result;
-            }
+				$results[] = $result;
+			}
 
-            $conn->close();
-            return $results;
-        }
+			$conn->close();
+			return $results;
+		}
 
 
-        /**
+		/**
 		 * Execute a query.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
 		 * @param string $sql - A MySQL statement.
 		 * @return QueryResult
 		 */
@@ -95,24 +95,24 @@
 			return new QueryResult($result, $rows);
 		}
 
-        /**
+		/**
 		 * Execute a scalar query. Returns whatever is returned from the query.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
 		 * @param string $sql - A MySQL statement.
-         * @return QueryResult.
+		 * @return QueryResult.
 		 */
 		public function scalar($sql) {
 			return new QueryResult($this->rawQuery($sql));
 		}
 
 
-        /**
+		/**
 		 * Select rows from a table.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
 		 * @param string $table
 		 * @param array $args
 		 * @return QueryResult
@@ -120,13 +120,13 @@
 		public function select($table, $args = []) {
 			$selecting = (isset($args['select'])) ? $args['select'] : '*';
 			$sql = "SELECT $selecting FROM $table";
-            
-            // WHERE
+
+			// WHERE
 			if(isset($args['where'])) {
 				$sql .= ' WHERE ' . $args['where'];
 			}
 
-            // ORDER BY
+			// ORDER BY
 			if(isset($args['orderBy'])) {
 				$sql .= ' ORDER BY ' . $args['orderBy'];
 				if(isset($args['orderDir'])) {
@@ -134,7 +134,7 @@
 				}
 			}
 
-            // LIMIT AND PAGANATION
+			// LIMIT AND PAGANATION
 			if(isset($args['limit'])) {
 				$sql .= ' LIMIT ' . $args['limit'];
 				if(isset($args['page'])) {
@@ -149,11 +149,11 @@
 			return $this->query($sql);
 		}
 
-        /**
+		/**
 		 * Count the number of rows that meet the condition.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
 		 * @param string $table
 		 * @param string $condition - An optional condition the count should follow.
 		 * @return int The number of rows in the table with the specific condition.
@@ -168,11 +168,11 @@
 			return $results->fetch_assoc()['total'];
 		}
 
-        /**
+		/**
 		 * Inserts a row into a table. Returns the ID of the row added.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
 		 * @param string $table
 		 * @param array $row
 		 * @return QueryResult
@@ -184,7 +184,7 @@
 				$columns .= "$key, ";
 
 				if(is_string($value)) $value = $this->wrap($value);
-                $values .= "$value, ";
+				$values .= "$value, ";
 			}
 
 			$columns = substr($columns, 0, strlen($columns) - 2);
@@ -192,11 +192,11 @@
 
 			$sql = "INSERT INTO $table ($columns) VALUES ($values);";
 			$results = $this->rawQueries([
-					$sql,
-					'SELECT LAST_INSERT_ID() as id;'
+				$sql,
+				'SELECT LAST_INSERT_ID() as id;'
 			]);
 
-			if($results[0] != null && $results[1] != null){
+			if($results[0] != null && $results[1] != null) {
 				$row = $results[1]->fetch_assoc();
 				return new QueryResult($results[0], [$row]);
 			}
@@ -205,40 +205,40 @@
 			}
 		}
 
-        /**
+		/**
 		 * Update all rows in a table that meet the condition.
 		 * If no condition is given then update all rows.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
 		 * @param string $table
 		 * @param array $row
 		 * @param string $condition
 		 * @return QueryResult
 		 */
-		public function update($table, $row, $condition = ''){
+		public function update($table, $row, $condition = '') {
 			$cev = '';
-			foreach($row as $key => $value){
+			foreach($row as $key => $value) {
 				$cev .= "$key=";
 
 				if(is_string($value)) $value = $this->wrap($value);
-                $cev .= "$value, ";
-			}
+				$cev .= "$value, ";
 
-			$cev = substr($cev, 0, strlen($cev) - 2);
-			$sql = "UPDATE $table SET $cev";
-			if($condition !== ''){
-				$sql .= " WHERE $condition";
+				$cev = substr($cev, 0, strlen($cev) - 2);
+				$sql = "UPDATE $table SET $cev";
+				if($condition !== ''){
+					$sql .= " WHERE $condition";
+				}
 			}
 
 			return $this->scalar($sql . ';');
 		}
 
-        /**
+		/**
 		 * Delete rows from a table that meet the condition.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
 		 * @param string $table
 		 * @param string $column
 		 * @param mixed $value
@@ -249,28 +249,28 @@
 			return $this->scalar($sql);
 		}
 
-        /**
-         * Escape a string in quotes.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
-         * @param string $str
-         * @return string
-         */
-        public function wrap($str) {
-            $conn = $this->connect();
-            $wrapped = "'" . mysqli_real_escape_string($conn, $str) . "'";
-            $conn->close();
+		/**
+		 * Escape a string in quotes.
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
+		 * @param string $str
+		 * @return string
+		 */
+		public function wrap($str) {
+			$conn = $this->connect();
+			$wrapped = "'" . mysqli_real_escape_string($conn, $str) . "'";
+			$conn->close();
 
-            return $wrapped;
-        }
+			return $wrapped;
+		}
 
 
-        /**
+		/**
 		 * Creates a random string.
-         *
-         * @author Christopher T. Bishop
-         * @since 0.1.0
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
 		 * @param int $count - How long the string should be.
 		 * @param int $prefix - A string that goes before the random string. The prefix length is part of the $count.
 		 * @param string $haystack - The available characters that the random string can have.
@@ -278,15 +278,15 @@
 		public static function randId($count, $prefix = '', $haystack = 'aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ0123456789') {
 			$str = '';
 			for($i = 0; $i < $count - strlen($prefix); $i++){
-				$str .= substr($haystack, rand(0, strlen($haystack) - 1), 1);
+			$str .= substr($haystack, rand(0, strlen($haystack) - 1), 1);
 			}
 
 			return $prefix + $str;
 		}
 
-    }
+	}
 
-    /**
+	/**
 	 * This is how query results are stored.
 	 * @author Christopher T. Bishop
 	 * @version 0.1.0
