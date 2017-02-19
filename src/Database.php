@@ -23,17 +23,22 @@
 		* @author Christopher T. Bishop
 		* @since 0.1.0
 		*/
-		public function __construct($url, $user, $password, $dbName) {
+		public function __construct($url, $user, $password, $dbName, $charset = '') {
 			$this->url = $url;
 			$this->user = $user;
 			$this->password = $password;
 			$this->dbName = $dbName;
+
+			if(count($charset) > 0) {
+				$this->setCharSet($charset);
+			}
 		}
 
 
 		private function connect() {
 			if($this->conn == null) {
-				$this->conn = new mysqli($this->url, $this->user, $this->password, $this->dbName);
+				$this->conn = new \mysqli($this->url, $this->user, $this->password, $this->dbName);
+
 				if($this->conn->connect_error) {
 					trigger_error('Could not connect to MySQL Server: ' . $this->conn->connect_error, E_USER_ERROR);
 					$this->conn = null;
@@ -47,12 +52,11 @@
 			$result = $conn->query($sql);
 
 			if($conn->error !== '') {
-				trigger_error("Mysql Error: $conn->error", E_USER_NOTICE);
+				trigger_error("MySQL Error: $conn->error", E_USER_NOTICE);
 				trigger_error($sql, E_USER_NOTICE);
 				$result = null;
 			}
 
-			$conn->close();
 			return $result;
 		}
 		private function rawQueries($sqls) {
@@ -60,7 +64,7 @@
 			$results = [];
 
 			foreach($sqls as $sql) {
-				$result = $con->query($sql);
+				$result = $conn->query($sql);
 				if($conn->error !== '') {
 					trigger_error("Mysql Error: $conn->error", E_USER_NOTICE);
 					trigger_error($sql, E_USER_NOTICE);
@@ -70,7 +74,6 @@
 				$results[] = $result;
 			}
 
-			$conn->close();
 			return $results;
 		}
 
@@ -138,7 +141,12 @@
 			if(isset($args['limit'])) {
 				$sql .= ' LIMIT ' . $args['limit'];
 				if(isset($args['page'])) {
-					$sql .= ' OFFSET ' . ($args['page'] - 1) * $args['limit'];
+					$page = $args['page'] - 1;
+					if($page < 0) {
+						$page = 0;
+					}
+
+					$sql .= ' OFFSET ' . $page * $args['limit'];
 				}
 				elseif(isset($args['offset'])) {
 					$sql .= ' OFFSET ' . $args['offset'];
@@ -166,6 +174,21 @@
 
 			$results = $this->rawQuery($sql);
 			return $results->fetch_assoc()['total'];
+		}
+
+		/**
+		 * Count the number of pages that meet the condition.
+		 *
+		 * @author Christopher T. Bishop
+		 * @since 0.1.0
+		 * @param string $table
+		 * @param string $condition - An optional condition the count should follow.
+		 * @param int $limit - How many rows are on each page.
+		 * @return int The number of pages the table has with the condition and limit.
+		 */
+		public function pageCount($table, $condition, $limit) {
+			$count = $this->count($table, $condition);
+			return ceil($count / $limit);
 		}
 
 		/**
@@ -260,11 +283,18 @@
 		public function wrap($str) {
 			$conn = $this->connect();
 			$wrapped = "'" . mysqli_real_escape_string($conn, $str) . "'";
-			$conn->close();
 
 			return $wrapped;
 		}
 
+		public function getCharSet() {
+			$conn = $this->connect();
+			return $conn->character_set_name();
+		}
+		public function setCharSet($charset) {
+			$conn = $this->connect();
+			return $conn->set_charset($charset);
+		}
 
 		/**
 		 * Creates a random string.
@@ -305,6 +335,28 @@
 
 		public function count(){
 			return count($this->rows);
+		}
+
+
+		public function toJson($prefix = '') {
+			$data;
+			$prefixLength = strlen($prefix);
+			if($prefixLength > 0) {
+				$data = [];
+				foreach($this->rows as $row) {
+					$datum = [];
+					foreach($row as $key => $value) {
+						$datum[substr($key, $prefixLength)] = $value;
+					}
+
+					$data[] = $datum;
+				}
+			}
+			else {
+				$data = $this->rows;
+			}
+
+			return json_encode($data, JSON_UNESCAPED_UNICODE);
 		}
 
 	}

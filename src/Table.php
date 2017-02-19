@@ -36,16 +36,18 @@
         }
 
         /**
-         * Select one row which meets the condition primaryKey=$value.
+         * Select one row which meets the condition $column=$value.
          *
          * @author Christopher T. Bishop
          * @since 0.1.0
+         * @param string $column - [DEFAULT: the primary key]
          * @param mixed $value
          * @return QueryResult
          */
-        public function selectOne($value) {
+        public function selectOne($column, $value) {
+            if($column == '') $column = $this->primaryKey;
             return $this->select([
-                'where' => "$this->primaryKey=$value",
+                'where' => "$column='$value'",
                 'limit' => 1
             ]);
         }
@@ -74,7 +76,7 @@
             $insertResult = $this->db->insert($this->name, $row);
             $id = $insertResult->rows[0]['id'];
 
-            $selectResult = $this->selectOne($id);
+            $selectResult = $this->selectOne('', $id);
 
             $result = null;
             if($selectResult->count() == 1) {

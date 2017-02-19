@@ -2,6 +2,7 @@
     namespace SimpleDB;
     require_once('Table.php');
 
+    const SECURITY_LOGIN_NAME = '__account_id';
 
     /**
      * A class for creating and logging in users.
@@ -21,8 +22,8 @@
         public function __construct($db, $args = []) {
             $this->db = $db;
 
-            $this->loginNameField = isset($args['loginName']) ?: 'account_name';
-            $this->loginPasswordField = isset($args['loginPassword']) ?: 'account_password';
+            $this->loginNameField = isset($args['loginName']) ? $args['loginName'] : 'account_name';
+            $this->loginPasswordField = isset($args['loginPassword']) ? $args['loginPassword'] : 'account_password';
 
             $this->accounts = new Table($this->db, 'account', 'account_id');
             $this->roles = new Table($this->db, 'role', 'role_id');
@@ -166,7 +167,7 @@
          */
         public function getAccount($id){
             $account = null;
-            $result = $this->accounts->selectOne($id);
+            $result = $this->accounts->selectOne('', $id);
 
             if($result->count() == 1){
                 $account = $result->rows[0];
